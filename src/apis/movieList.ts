@@ -1,10 +1,18 @@
-import { Movie, Path } from "../components/templates/generateMovieItems";
-import APIError from "../error/APIError";
+import { Path } from "../components/templates/movie/generateMovieItems";
+import { Movie } from "../types/movie";
+import APIClient from "./APIClient";
 
-const BASE_URL = "https://api.themoviedb.org/3";
+const BASE_URL = "https://api.themoviedb.org";
 
-const POPULAR_MOVIE_LIST_PATH = "/movie/popular";
-const SEARCH_MOVIE_LIST_PATH = "/search/movie";
+const POPULAR_MOVIE_LIST_PATH = "/3/movie/popular";
+const SEARCH_MOVIE_PATH = `/3/search/movie`;
+
+const KOREAN_LANGUAGE = "ko-KR";
+
+const header = {
+  accept: "application/json",
+  Authorization: `Bearer ${process.env.TMDB_ACCESS_KEY}`,
+};
 
 type DateString = string;
 
@@ -33,43 +41,34 @@ const parseRawMovieList = (movieRawDataList: MovieRawData[]): Movie[] =>
     voteAverage: movieRawData.vote_average,
   }));
 
+const tmdbAPIClient = new APIClient(BASE_URL, header);
+
 export const getPopularMovieList = async (
   page: number = 1
 ): Promise<Movie[]> => {
-  const response = await fetch(
-    `${BASE_URL}${POPULAR_MOVIE_LIST_PATH}?language=ko-KR&page=${page}`,
-    {
-      headers: {
-        accept: "application/json",
-        Authorization: `Bearer ${process.env.TMDB_ACCESS_KEY}`,
-      },
-    }
+  const data = await tmdbAPIClient.get<{ results: MovieRawData[] }>(
+    POPULAR_MOVIE_LIST_PATH,
+    new URLSearchParams({
+      language: KOREAN_LANGUAGE,
+      page: page.toString(),
+    })
   );
 
-  const movieList = await response.json();
-
-  return parseRawMovieList(movieList.results);
+  return parseRawMovieList(data.results);
 };
 
 export const getSearchMovieList = async (
   query: string,
   page: number = 1
 ): Promise<Movie[]> => {
-  const response = await fetch(
-    `${BASE_URL}${SEARCH_MOVIE_LIST_PATH}?query=${query}&page=${page}`,
-    {
-      headers: {
-        accept: "application/json",
-        Authorization: `Bearer ${process.env.TMDB_ACCESS_KEY}`,
-      },
-    }
+  const data = await tmdbAPIClient.get<{ results: MovieRawData[] }>(
+    SEARCH_MOVIE_PATH,
+    new URLSearchParams({
+      language: KOREAN_LANGUAGE,
+      query,
+      page: page.toString(),
+    })
   );
 
-  const movieList = await response.json();
-
-  if (response.ok) {
-    return parseRawMovieList(movieList.results);
-  } else {
-    throw new APIError(response.status);
-  }
+  return parseRawMovieList(data.results);
 };

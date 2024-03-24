@@ -1,12 +1,17 @@
-import BaseComponent, { HTMLTemplate } from "./BaseComponent";
+import BaseComponent from "./BaseComponent";
 
 export default abstract class EventComponent extends BaseComponent {
-  init(): void {
-    this.render();
+  initialize(): void {
+    super.initialize();
+    this.onInitialized();
+  }
+
+  protected render() {
+    super.render();
     this.setEvent();
   }
 
-  protected abstract getTemplate(): HTMLTemplate;
-
   protected abstract setEvent(): void;
+
+  protected onInitialized(): void {}
 }
